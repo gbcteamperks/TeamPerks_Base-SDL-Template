@@ -5,7 +5,7 @@
 #define FPS 60
 using namespace std;
 
-Engine::Engine() :m_bRunning(false) { cout << "Engine class constructed!" << endl; }
+Engine::Engine() :m_Running(false) { cout << "Engine class constructed!" << endl; }
 Engine::~Engine() {}
 
 bool Engine::Init(const char* title, int xpos, int ypos, int width, int height, int flags)
@@ -18,20 +18,23 @@ bool Engine::Init(const char* title, int xpos, int ypos, int width, int height, 
 		m_pWindow = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
 		if (m_pWindow != nullptr) // Window init success.
 		{
-			m_pRenderer = SDL_CreateRenderer(m_pWindow, -1, 0);
+			m_pRenderer = SDL_CreateRenderer(m_pWindow, -1, SDL_RENDERER_PRESENTVSYNC);
 			if (m_pRenderer != nullptr) // Renderer init success.
 			{
-
+				cout << "!renderer created"<<endl;
 			}
-			else return false; // Renderer init fail.
+			else
+			{
+				return false; // Renderer init fail.
+			}
 		}
 		else return false; // Window init fail.
 	}
 	else return false; // SDL init fail.
 	m_fps = (Uint32)round((1 / (double)FPS) * 1000); // Sets FPS in milliseconds and rounds.
-	m_iKeystates = SDL_GetKeyboardState(nullptr);
+	m_Keystates = SDL_GetKeyboardState(nullptr);
 
-	m_bRunning = true; // Everything is okay, start the engine.
+	m_Running = true; // Everything is okay, start the engine.
 	cout << "Init success!" << endl;
 	return true;
 }
@@ -49,6 +52,22 @@ void Engine::Sleep()
 		SDL_Delay(m_fps - m_delta);
 }
 
+void Engine::waitForTheNextFrame()		//check for next frame
+{
+	Uint32 gameTimeMs = SDL_GetTicks();
+	m_timeSinceLastFrame = gameTimeMs - m_lastFrameStartTimeMs;
+
+	if (m_timeSinceLastFrame < m_frameDelayMs)
+	{
+		SDL_Delay(m_frameDelayMs - m_timeSinceLastFrame);
+	}
+
+	m_frameEndTimeMs = SDL_GetTicks();
+	m_deltaTime = (m_frameEndTimeMs - m_lastFrameStartTimeMs) / 1000.f;
+	m_gameTime = m_frameEndTimeMs / 1000.f;
+	m_lastFrameStartTimeMs = m_frameEndTimeMs;
+}
+
 void Engine::HandleEvents()
 {
 	SDL_Event event;
@@ -58,11 +77,35 @@ void Engine::HandleEvents()
 		switch (event.type)
 		{
 		case SDL_QUIT: // User pressed window's 'x' button.
-			m_bRunning = false;
+			m_Running = false;
 			break;
 		case SDL_KEYDOWN: // Try SDL_KEYUP instead.
-			if (event.key.keysym.sym == SDLK_ESCAPE)
-				m_bRunning = false;
+			switch (event.key.keysym.sym)
+			{
+				case SDLK_a:
+				case SDLK_LEFT:
+					m_pSprite1->m_dst.x -= (m_movementSpeed * m_deltaTime);
+					break;
+
+				case SDLK_d:
+				case SDLK_RIGHT:
+					m_pSprite1->m_dst.x += (m_movementSpeed * m_deltaTime);
+					break;
+
+				case SDLK_w:
+				case SDLK_UP:
+					m_pSprite1->m_dst.y -= (m_movementSpeed * m_deltaTime);
+					break;
+
+				case SDLK_s:
+				case SDLK_DOWN:
+					m_pSprite1->m_dst.y += (m_movementSpeed * m_deltaTime);
+					break;
+
+				case SDLK_ESCAPE:
+					m_Running = false;
+					break;
+			}
 			break;
 		}
 	}
@@ -71,9 +114,9 @@ void Engine::HandleEvents()
 // Keyboard utility function.
 bool Engine::KeyDown(SDL_Scancode c)
 {
-	if (m_iKeystates != nullptr)
+	if (m_Keystates != nullptr)
 	{
-		if (m_iKeystates[c] == 1)
+		if (m_Keystates[c] == 1)
 			return true;
 		else
 			return false;
@@ -91,7 +134,7 @@ void Engine::Render()
 	SDL_SetRenderDrawColor(m_pRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(m_pRenderer); // Clear the screen with the draw color.
 	// Render stuff.
-
+	m_spriteManager.drawAll();
 	// Draw anew.
 	SDL_RenderPresent(m_pRenderer);
 }
@@ -106,17 +149,23 @@ void Engine::Clean()
 
 int Engine::Run()
 {
-	if (m_bRunning) // What does this do and what can it prevent?
+	if (m_Running) // What does this do and what can it prevent?
 		return -1;
 	if (Init("Team Perks - Base Template", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0) == false)
 		return 1;
-	while (m_bRunning) // Main engine loop.
+
+	m_pSprite1 = new Sprite(m_pRenderer, "Resources/Visual/pizza.png", 500, 489, 500, 489, 1);
+	m_pSprite1->setSize(200, 200);
+	m_pSprite1->setPosition(410, 285);
+	m_spriteManager.add(m_pSprite1);
+	while (m_Running) // Main engine loop.
 	{
 		Wake();
 		HandleEvents();
 		Update();
 		Render();
-		if (m_bRunning)
+		waitForTheNextFrame();
+		if (m_Running)
 			Sleep();
 	}
 	Clean();

@@ -19,11 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MathManager.cpp" />
+    <ClCompile Include="Sprite.cpp" />
+    <ClCompile Include="SpriteManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="MathManager.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Sprite.h" />
+    <ClInclude Include="SpriteManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="For_Devs-Readme.txt" />
@@ -32,6 +41,9 @@
     <None Include="..\..\TeamPerks-SDL_Engine-Template\.gitattributes" />
     <None Include="..\..\TeamPerks-SDL_Engine-Template\.gitignore" />
     <None Include="..\..\TeamPerks-SDL_Engine-Template\check.cppcheck" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\Visual\pizza.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
